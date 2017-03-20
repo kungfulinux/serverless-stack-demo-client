@@ -6,7 +6,7 @@ import {
   FormControl,
   ControlLabel,
 } from 'react-bootstrap';
-import LoaderButton from '../components/LoaderButton.js';
+import LoaderButton from '../components/LoaderButton';
 import './Signup.css';
 
 class Signup extends Component {
