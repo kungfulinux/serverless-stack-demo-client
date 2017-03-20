@@ -5,7 +5,7 @@ import {
   FormControl,
   ControlLabel,
 } from 'react-bootstrap';
-import { invokeApig } from '../libs/awsLib.js';
+import { invokeApig } from '../libs/awsLib';
 import LoaderButton from '../components/LoaderButton';
 import config from '../config.js';
 import './NewNote.css';
