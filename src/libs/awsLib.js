@@ -1,32 +1,33 @@
 import AWS from 'aws-sdk';
+import apigClientFactory from 'aws-api-gateway-client';
 import config from '../config.js';
 
 export async function invokeApig(
   { path,
     method = 'GET',
-    body }, userToken) {
+    params = {},
+    body = {} }, userToken) {
 
-  const url = `${config.apiGateway.URL}${path}`;
-  const headers = {
-    Authorization: userToken,
-  };
+  await getAwsCredentials(userToken);
 
-  body = (body) ? JSON.stringify(body) : body;
-
-  const results = await fetch(url, {
-    method,
-    body,
-    headers
+  const apigClient = apigClientFactory.newClient({
+    accessKey: AWS.config.credentials.accessKeyId,
+    secretKey: AWS.config.credentials.secretAccessKey,
+    sessionToken: AWS.config.credentials.sessionToken,
+    region: config.apiGateway.REGION,
+    invokeUrl: config.apiGateway.URL
   });
 
-  if (results.status !== 200) {
-    throw new Error(await results.text());
-  }
+  const results = await apigClient.invokeApi(params, path, method, {}, body);
 
-  return results.json();
+  return results.data;
 }
 
 export function getAwsCredentials(userToken) {
+  if (AWS.config.credentials && (new Date()) <= AWS.config.credentials.expireTime) {
+    return;
+  }
+
   const authenticator = `cognito-idp.${config.cognito.REGION}.amazonaws.com/${config.cognito.USER_POOL_ID}`;
 
   AWS.config.update({ region: config.cognito.REGION });
