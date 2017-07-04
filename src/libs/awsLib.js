@@ -24,7 +24,7 @@ export async function invokeApig(
 }
 
 export function getAwsCredentials(userToken) {
-  if (AWS.config.credentials && (new Date()) <= AWS.config.credentials.expireTime) {
+  if (AWS.config.credentials && Date.now() < AWS.config.credentials.expireTime - 60000) {
     return;
   }
 
