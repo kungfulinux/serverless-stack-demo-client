@@ -1,26 +1,46 @@
 import AWS from 'aws-sdk';
-import apigClientFactory from 'aws-api-gateway-client';
+import sigV4Client from './sigV4Client';
 import config from '../config.js';
 
 export async function invokeApig(
   { path,
     method = 'GET',
-    params = {},
-    body = {} }, userToken) {
+    headers = {},
+    queryParams = {},
+    body }, userToken) {
 
   await getAwsCredentials(userToken);
 
-  const apigClient = apigClientFactory.newClient({
-    accessKey: AWS.config.credentials.accessKeyId,
-    secretKey: AWS.config.credentials.secretAccessKey,
-    sessionToken: AWS.config.credentials.sessionToken,
-    region: config.apiGateway.REGION,
-    invokeUrl: config.apiGateway.URL
+  const signedRequest = sigV4Client
+    .newClient({
+      accessKey: AWS.config.credentials.accessKeyId,
+      secretKey: AWS.config.credentials.secretAccessKey,
+      sessionToken: AWS.config.credentials.sessionToken,
+      region: config.apiGateway.REGION,
+      endpoint: config.apiGateway.URL,
+    })
+    .signRequest({
+      method,
+      path,
+      headers,
+      queryParams,
+      body
+    });
+
+  body = body ? JSON.stringify(body) : body;
+  headers = signedRequest.headers;
+
+  const results = await fetch(signedRequest.url, {
+    method,
+    headers,
+    body
   });
 
-  const results = await apigClient.invokeApi(params, path, method, {}, body);
+  if (results.status !== 200) {
+    throw new Error(await results.text());
+  }
 
-  return results.data;
+  return results.json();
 }
 
 export function getAwsCredentials(userToken) {
