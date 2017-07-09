@@ -223,7 +223,7 @@ sigV4Client.newClient = function(config) {
     }
 
     // If there is no body remove the content-type header so it is not included in SigV4 calculation
-    if (body === "" || body === undefined || body === null) {
+    if (body === "") {
       delete headers["Content-Type"];
     }
 
@@ -232,6 +232,7 @@ sigV4Client.newClient = function(config) {
       .replace(/\.\d{3}Z$/, "Z")
       .replace(/[:-]|\.\d{3}/g, "");
     headers[X_AMZ_DATE] = datetime;
+
     let parser = new URL(awsSigV4Client.endpoint);
     headers[HOST] = parser.hostname;
 
@@ -266,12 +267,14 @@ sigV4Client.newClient = function(config) {
       headers,
       signature
     );
+
     if (
       awsSigV4Client.sessionToken !== undefined &&
       awsSigV4Client.sessionToken !== ""
     ) {
       headers[X_AMZ_SECURITY_TOKEN] = awsSigV4Client.sessionToken;
     }
+
     delete headers[HOST];
 
     let url = awsSigV4Client.endpoint + path;
